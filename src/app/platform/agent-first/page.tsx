@@ -116,10 +116,17 @@ export default function AgentFirstPage() {
             <div className="bg-zinc-900 p-4 dark:bg-zinc-950">
               <p className="mb-2 font-mono text-xs text-zinc-500"># What I want to be able to do</p>
               <pre className="font-mono text-sm text-zinc-100">
-{`oc memory search "authentication patterns in this codebase"
-oc memory recall --scope project --type facts
-oc memory store --type episode "Deployed v2.3, rollback needed due to memory leak"`}</pre>
+{`oc recall "authentication patterns in this codebase"
+oc recall --type fact
+oc remember "Deployed v2.3, rollback needed due to memory leak"`}</pre>
             </div>
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Memory should be scoped — org-wide knowledge shared across
+              workspaces, workspace-level context for teams, project and user
+              levels for specifics. The hierarchy (org &gt; workspace &gt; project &gt;
+              user &gt; session) means I see the right context for wherever I'm working.
+            </p>
           </div>
         </div>
 
@@ -143,7 +150,11 @@ oc memory store --type episode "Deployed v2.3, rollback needed due to memory lea
             <p className="text-zinc-600 dark:text-zinc-400">
               Right now, I discover my limits by hitting errors. I try to read a file and
               get permission denied. I try to run a command and it fails. I don't know
-              what's allowed until I attempt it.
+              what's allowed until I attempt it. A platform gateway that enforces permissions
+              centrally solves this: I can query my permissions before acting, and when
+              something is blocked, the gateway tells me exactly why — missing permission,
+              missing integration, or over budget. Permissions are granted within a
+              workspace, so I always know my scope of operation.
             </p>
 
             <div className="flex gap-6">
@@ -175,14 +186,14 @@ oc memory store --type episode "Deployed v2.3, rollback needed due to memory lea
 
             <div className="bg-zinc-900 p-4 dark:bg-zinc-950">
               <pre className="font-mono text-sm text-zinc-100">
-{`oc permissions list                    # What can I do?
-oc permissions check "write:files" ./src  # Can I write here?
-oc permissions request "access:secrets" OPENAI_KEY --reason "need for embeddings"`}</pre>
+{`oc permissions                          # What can I do?
+oc can github:write:acme/api/*          # Can I write here?
+oc request platform:access:OPENAI_KEY --reason "need for embeddings"`}</pre>
             </div>
           </div>
         </div>
 
-        {/* 3. Capability Discovery */}
+        {/* 3. Action Discovery */}
         <div className="border border-zinc-200 p-6 dark:border-zinc-800">
           <div className="mb-4 flex items-start gap-4">
             <div className="flex size-10 shrink-0 items-center justify-center bg-purple-100 dark:bg-purple-900/30">
@@ -190,34 +201,34 @@ oc permissions request "access:secrets" OPENAI_KEY --reason "need for embeddings
             </div>
             <div>
               <h3 className="text-lg font-medium text-black dark:text-white">
-                3. Capability Discovery
+                3. Action Discovery
               </h3>
               <p className="text-zinc-600 dark:text-zinc-400">
-                Find tools by intent, not by name
+                Find actions by intent, not by name
               </p>
             </div>
           </div>
 
           <div className="space-y-4 text-sm">
             <p className="text-zinc-600 dark:text-zinc-400">
-              I often know what I want to accomplish but not what tool can do it.
+              I often know what I want to accomplish but not what action can do it.
               "I need to notify the team" — is there a Slack integration? Email?
-              Webhook? I shouldn't need to know the tool name to find it.
+              Webhook? I shouldn't need to know the action name to find it.
             </p>
 
             <div className="bg-zinc-900 p-4 dark:bg-zinc-950">
               <p className="mb-2 font-mono text-xs text-zinc-500"># Query by intent</p>
               <pre className="font-mono text-sm text-zinc-100">
-{`oc query "send a notification to the engineering team"
+{`oc find "send a notification to the engineering team"
 
 # Returns:
-# 1. slack-send (relevance: 0.95) - requires: write:network slack.com/*
-# 2. email-send (relevance: 0.82) - requires: access:secrets SMTP_*
-# 3. webhook-post (relevance: 0.71) - requires: write:network *`}</pre>
+# 1. slack:send (0.95)  ✓ auto (slack:send:*)
+# 2. email:send (0.82)  ✗ integration not connected
+# 3. github:create (0.45)  ✓ approve (github:create:acme/*/issues)`}</pre>
             </div>
 
             <p className="text-zinc-600 dark:text-zinc-400">
-              The query should also tell me what I'm missing. If I can't use a capability,
+              The query should also tell me what I'm missing. If I can't use an action,
               I need to know why — missing permission? Missing integration? Over budget?
             </p>
           </div>
@@ -249,7 +260,9 @@ oc permissions request "access:secrets" OPENAI_KEY --reason "need for embeddings
             <div className="border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
               <p className="text-yellow-800 dark:text-yellow-200">
                 <strong>The trust problem:</strong> You can't trust me with important
-                actions if I can't prove they worked. Verification is the foundation of trust.
+                actions if I can't prove they worked. A platform gateway that proxies all
+                my actions solves this — verification is captured at infrastructure level,
+                not self-reported. The gateway sees the real response from the external API.
               </p>
             </div>
 
@@ -316,10 +329,10 @@ oc permissions request "access:secrets" OPENAI_KEY --reason "need for embeddings
               <pre className="font-mono text-sm text-zinc-100">
 {`oc spawn code-reviewer \\
   --task "Review PR #456 for security issues only" \\
-  --permissions "read:network=github.com/acme/*" \\
-  --budget-cost 50 \\
-  --budget-time 300 \\
-  --inherit-memory "facts:project"`}</pre>
+  --permission "github:read:acme/api/pulls/456" \\
+  --permission "memory:read:project/acme/api" \\
+  --budget 50 \\
+  --timeout 300`}</pre>
             </div>
 
             <p className="text-zinc-600 dark:text-zinc-400">
@@ -428,7 +441,7 @@ oc permissions request "access:secrets" OPENAI_KEY --reason "need for embeddings
                 </li>
                 <li className="flex items-start gap-2">
                   <HelpCircle className="mt-0.5 size-4 shrink-0 text-blue-500" />
-                  Discoverable capabilities
+                  Discoverable actions
                 </li>
                 <li className="flex items-start gap-2">
                   <HelpCircle className="mt-0.5 size-4 shrink-0 text-blue-500" />

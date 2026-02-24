@@ -14,6 +14,8 @@ import {
   ChevronRight,
   DollarSign,
   ArrowUpRight,
+  Building2,
+  Layers,
 } from "lucide-react";
 
 // =============================================================================
@@ -261,6 +263,83 @@ export default function FoundationsPage() {
       </section>
 
       {/* ================================================================== */}
+      {/* THE CONTEXT: ORGANIZATION & WORKSPACE */}
+      {/* ================================================================== */}
+      <section className="space-y-6">
+        <h2 className="font-mono text-sm font-medium uppercase tracking-wider text-zinc-500">
+          The Context: Organization & Workspace
+        </h2>
+
+        <p className="text-zinc-600 dark:text-zinc-400">
+          Before the five concepts, there is context. Every agent, session, and
+          permission operates within a specific scope. Two structural concepts
+          define that scope.
+        </p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="border border-zinc-200 p-6 dark:border-zinc-800">
+            <div className="mb-3 flex items-center gap-3">
+              <Building2 className="size-5 text-indigo-500" />
+              <h3 className="font-medium text-black dark:text-white">Organization</h3>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              A company. Top-level billing, membership, and shared resources.
+              Org-level integrations (e.g., GitHub, Stripe) are available to
+              all workspaces within the org. Members are managed at org level.
+            </p>
+            <p className="mt-2 font-mono text-xs text-zinc-500">
+              e.g., Acme Inc — louis (admin), alice (member)
+            </p>
+          </div>
+          <div className="border border-zinc-200 p-6 dark:border-zinc-800">
+            <div className="mb-3 flex items-center gap-3">
+              <Layers className="size-5 text-cyan-500" />
+              <h3 className="font-medium text-black dark:text-white">Workspace</h3>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              A scoped container within an org. Holds agents, trust profiles,
+              permissions, memory, and sessions. Inherits org-level integrations
+              and can add its own workspace-level integrations.
+            </p>
+            <p className="mt-2 font-mono text-xs text-zinc-500">
+              e.g., Engineering (default), Support, Data
+            </p>
+          </div>
+        </div>
+
+        <div className="border-2 border-zinc-300 p-6 dark:border-zinc-700">
+          <p className="font-medium text-black dark:text-white mb-2">
+            Org = workspace by default
+          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            When you create an organization, it starts with a single default
+            workspace. All your agents, permissions, and memory live there. No
+            additional complexity until you need it. When a company grows to
+            serve multiple teams — engineering, support, data — they subdivide
+            into workspaces. Each workspace gets its own agents, trust profiles,
+            and scoped memory, while sharing org-level integrations.
+          </p>
+        </div>
+
+        <CodeBlock>
+{`Organization (Acme Inc)
+├── Members: louis (admin), alice (member)
+├── Billing
+├── Org-level integrations: GitHub, Stripe
+└── Workspaces
+    ├── Engineering (default)
+    │   ├── Integrations: Slack #engineering (workspace-level)
+    │   ├── Agents + trust profiles
+    │   ├── Memory store (scoped)
+    │   └── Sessions
+    └── Support
+        ├── Integrations: Zendesk, Slack #support (workspace-level)
+        ├── Agents + trust profiles
+        └── ...`}
+        </CodeBlock>
+      </section>
+
+      {/* ================================================================== */}
       {/* THE FIVE CONCEPTS */}
       {/* ================================================================== */}
       <section className="space-y-4">
@@ -269,8 +348,8 @@ export default function FoundationsPage() {
         </h2>
 
         <p className="text-zinc-600 dark:text-zinc-400">
-          Everything above rests on five technical primitives. They are
-          deliberately minimal. If the platform can't be explained in five
+          Within a workspace, everything rests on five technical primitives. They
+          are deliberately minimal. If the platform can't be explained in five
           concepts, it's too complex to trust.
         </p>
 
@@ -314,7 +393,9 @@ export default function FoundationsPage() {
         <p className="text-zinc-600 dark:text-zinc-400">
           An integration is a live connection to something outside the platform.
           Slack, GitHub, Stripe, a database, an API. Humans set these up.
-          Each integration exposes specific actions I can take.
+          Each integration exposes specific actions I can take. Credentials
+          are stored platform-side — I never see or hold them. When I take
+          an action, the platform gateway injects the real credentials on my behalf.
         </p>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -336,7 +417,9 @@ export default function FoundationsPage() {
 
         <div className="border-l-2 border-blue-300 pl-4 text-sm text-zinc-600 dark:text-zinc-400">
           <strong>Key insight:</strong> Integrations are the bridge between me and the real world.
-          Without them, I'm just thinking. With them, I can act.
+          Without them, I'm just thinking. With them, I can act. But I never hold the
+          keys — the platform gateway handles credential injection, so even a
+          compromised session can't leak tokens.
         </div>
       </Concept>
 
@@ -395,7 +478,7 @@ export default function FoundationsPage() {
 
         <CodeBlock>
 {`# Query for actions by intent (not by name)
-oc actions search "notify the team about build failure"
+oc find "notify the team about build failure"
 
 # Results show what's available and what's missing
 ACTION                TYPE          AVAILABLE  MISSING
@@ -422,25 +505,28 @@ sms:send              paid          yes        -  ($0.02/msg)`}
       >
         <p className="text-zinc-600 dark:text-zinc-400">
           Permissions are specific. Not "access to Slack" but "can send messages to #engineering".
-          They start narrow and widen as trust is established through track record.
+          And every permission carries a mode: <strong>auto</strong> (just do it) or{" "}
+          <strong>approve</strong> (ask the human first). The permission and the oversight
+          are one decision — like telling an intern "you can merge PRs, but check with me each time."
         </p>
 
         <div className="space-y-3">
           <p className="text-sm font-medium text-black dark:text-white">Permission anatomy:</p>
 
           <div className="bg-zinc-100 dark:bg-zinc-800 p-4 font-mono text-sm">
-            <span className="text-blue-600 dark:text-blue-400">integration</span>
+            <span className="text-blue-600 dark:text-blue-400">namespace</span>
             <span className="text-zinc-400">:</span>
-            <span className="text-purple-600 dark:text-purple-400">resource</span>
+            <span className="text-purple-600 dark:text-purple-400">verb</span>
             <span className="text-zinc-400">:</span>
-            <span className="text-green-600 dark:text-green-400">action</span>
+            <span className="text-green-600 dark:text-green-400">resource</span>
+            <span className="text-zinc-400 ml-4">→</span>
+            <span className="text-orange-600 dark:text-orange-400 ml-2">mode</span>
 
             <div className="mt-4 space-y-1 text-zinc-600 dark:text-zinc-400">
-              <p><span className="text-zinc-900 dark:text-zinc-100">slack:#engineering:send</span> — send to one channel</p>
-              <p><span className="text-zinc-900 dark:text-zinc-100">slack:*:read</span> — read any channel</p>
-              <p><span className="text-zinc-900 dark:text-zinc-100">github:acme/api:pulls:read</span> — read PRs in one repo</p>
-              <p><span className="text-zinc-900 dark:text-zinc-100">github:acme/*:issues:write</span> — write issues in any acme repo</p>
-              <p><span className="text-zinc-900 dark:text-zinc-100">stripe:charges:read</span> — read charges (no create)</p>
+              <p><span className="text-zinc-900 dark:text-zinc-100">slack:send:#engineering</span> <span className="text-green-600 dark:text-green-400">(auto)</span> — send freely</p>
+              <p><span className="text-zinc-900 dark:text-zinc-100">github:read:acme/api/pulls/*</span> <span className="text-green-600 dark:text-green-400">(auto)</span> — read without asking</p>
+              <p><span className="text-zinc-900 dark:text-zinc-100">github:merge:acme/api/*</span> <span className="text-yellow-600 dark:text-yellow-400">(approve)</span> — can merge, but check first</p>
+              <p><span className="text-zinc-900 dark:text-zinc-100">stripe:create:charges/*</span> <span className="text-yellow-600 dark:text-yellow-400">(approve)</span> — can charge, but ask each time</p>
             </div>
           </div>
         </div>
@@ -448,15 +534,15 @@ sms:send              paid          yes        -  ($0.02/msg)`}
         <div className="space-y-3">
           <p className="text-sm font-medium text-black dark:text-white flex items-center gap-2">
             <ArrowUpRight className="size-4" />
-            Trust escalation:
+            Trust grows in two ways:
           </p>
           <div className="grid gap-3">
             <div className="flex items-start gap-3 border border-zinc-100 p-3 dark:border-zinc-800">
               <span className="flex size-5 shrink-0 items-center justify-center bg-zinc-200 font-mono text-xs dark:bg-zinc-700">1</span>
               <div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  <strong className="text-black dark:text-white">New relationship:</strong> Scoped
-                  to specific resources, approval required for writes
+                  <strong className="text-black dark:text-white">New permissions are granted:</strong> The
+                  agent can do more things.
                 </p>
               </div>
             </div>
@@ -464,18 +550,8 @@ sms:send              paid          yes        -  ($0.02/msg)`}
               <span className="flex size-5 shrink-0 items-center justify-center bg-zinc-200 font-mono text-xs dark:bg-zinc-700">2</span>
               <div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  <strong className="text-black dark:text-white">Established:</strong> Broad read
-                  access, write access to familiar resources, approval only for new domains
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 border border-zinc-100 p-3 dark:border-zinc-800">
-              <span className="flex size-5 shrink-0 items-center justify-center bg-zinc-200 font-mono text-xs dark:bg-zinc-700">3</span>
-              <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  <strong className="text-black dark:text-white">Trusted:</strong> Wide permissions
-                  with approval gates only on high-risk actions (production deploys, financial
-                  transactions, external communications)
+                  <strong className="text-black dark:text-white">Modes upgrade from approve to auto:</strong> The
+                  agent does familiar things without asking.
                 </p>
               </div>
             </div>
@@ -484,28 +560,33 @@ sms:send              paid          yes        -  ($0.02/msg)`}
 
         <CodeBlock>
 {`# What I have
-oc permissions list
+oc permissions
 
-PERMISSION                        DELEGATABLE  EXPIRES
-slack:#engineering:send           yes          -
-slack:#engineering:read           yes          -
-github:acme/api:pulls:read        yes          -
-github:acme/api:pulls:456:comment yes          -
-github:acme/api:pulls:456:merge   no           (requires approval)
+PERMISSION                          MODE      DELEGATABLE  EXPIRES
+slack:send:#engineering             auto      yes          never
+slack:read:#engineering             auto      yes          never
+github:read:acme/api/*              auto      yes          never
+github:comment:acme/api/*           auto      yes          never
+github:merge:acme/api/*             approve   no           never
 
 # Check before acting
-oc permissions check github:acme/api:pulls:456:comment
-✓ Allowed
+oc can github:comment:acme/api/pulls/456
+✓ Allowed (auto)
 
-# Request what I don't have (triggers human approval)
-oc permissions request github:acme/api:pulls:456:merge \\
-  --reason "Review passed, ready to merge"`}
+oc can github:merge:acme/api/pulls/456
+⏳ Allowed with approval (approve)
+
+# Request what I don't have
+oc request stripe:read:charges/* \\
+  --reason "Customer asked about recent charges"`}
         </CodeBlock>
 
         <div className="border-l-2 border-green-300 pl-4 text-sm text-zinc-600 dark:text-zinc-400">
-          <strong>Key insight:</strong> The goal is not permanent minimalism.
-          It's a permission surface that grows with demonstrated competence
-          until approval gates exist only where they genuinely matter.
+          <strong>Key insight:</strong> Permissions are enforced at the platform gateway,
+          not client-side. This means humans can grant broader access confidently —
+          they can revoke or narrow permissions in real-time, and every action
+          is verified before it reaches the external API. The permission <em>is</em>{" "}
+          the policy. No separate approval rules to cross-reference.
         </div>
       </Concept>
 
@@ -553,7 +634,7 @@ oc permissions request github:acme/api:pulls:456:merge \\
             </div>
             <div className="flex items-center gap-4">
               <span className="w-24 text-zinc-500">Scope</span>
-              <span className="text-zinc-900 dark:text-zinc-100">user:louis</span>
+              <span className="text-zinc-900 dark:text-zinc-100">workspace:engineering &gt; user:louis</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="w-24 text-zinc-500">Confidence</span>
@@ -572,7 +653,7 @@ oc permissions request github:acme/api:pulls:456:merge \\
 
         <CodeBlock>
 {`# Search with recency awareness
-oc memory search "deployment process"
+oc recall "deployment process"
 
 TYPE       AGE        CONFIDENCE  CONTENT
 fact       2w ago     90%         Deploy target is Vercel
@@ -597,9 +678,11 @@ fact       1y ago     60%         Deploy target is Heroku (STALE - contradicted)
         </div>
 
         <div className="border-l-2 border-yellow-300 pl-4 text-sm text-zinc-600 dark:text-zinc-400">
-          <strong>Key insight:</strong> Memory isn't just storage — it's living context
-          with time, confidence, and relevance. It's what turns a stateless tool into a
-          persistent collaborator.
+          <strong>Key insight:</strong> Memory lives at the platform level, not inside sessions.
+          It's scoped hierarchically — org &gt; workspace &gt; project &gt; user &gt; session — so
+          memories are shared appropriately. Workspace-level facts are visible to all agents
+          in that workspace, while user-level preferences stay personal. Accessed through the
+          same permission model as everything else.
         </div>
       </Concept>
 
@@ -613,7 +696,8 @@ fact       1y ago     60%         Deploy target is Heroku (STALE - contradicted)
         color="bg-orange-50 text-orange-900 dark:bg-orange-950 dark:text-orange-100"
       >
         <p className="text-zinc-600 dark:text-zinc-400">
-          A session is where I do work. It has a task, permissions, budget, and memory scope.
+          A session is where I do work. It has a task, permissions, and a budget.
+          Memory access, integration access, compute — all governed by permissions.
           Sessions can spawn sub-sessions with narrower permissions. The trust chain only narrows.
         </p>
 
@@ -632,15 +716,11 @@ fact       1y ago     60%         Deploy target is Heroku (STALE - contradicted)
           </div>
           <div className="flex items-center gap-4">
             <span className="w-28 text-zinc-500">Permissions</span>
-            <span className="text-zinc-900 dark:text-zinc-100">5 granted, 2 delegatable</span>
+            <span className="text-zinc-900 dark:text-zinc-100">7 granted (incl. memory:read, memory:write)</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="w-28 text-zinc-500">Budget</span>
             <span className="text-zinc-900 dark:text-zinc-100">$5.00 max, 5 minutes max</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="w-28 text-zinc-500">Memory scope</span>
-            <span className="text-zinc-900 dark:text-zinc-100">project:acme/api + user:louis</span>
           </div>
         </div>
 
@@ -665,10 +745,10 @@ fact       1y ago     60%         Deploy target is Heroku (STALE - contradicted)
 {`# Spawn a sub-session for a focused task
 oc spawn security-reviewer \\
   --task "Check for SQL injection in user inputs" \\
-  --permissions github:acme/api:pulls:456:read \\
-  --budget 50c \\
-  --timeout 60s \\
-  --memory-inherit facts:project
+  --permission "github:read:acme/api/pulls/456" \\
+  --permission "memory:read:project/acme/api" \\
+  --budget 50 \\
+  --timeout 60
 
 # I can only delegate permissions I have AND that are marked delegatable
 # Budget cannot exceed my remaining budget
@@ -676,8 +756,9 @@ oc spawn security-reviewer \\
         </CodeBlock>
 
         <div className="border-l-2 border-orange-300 pl-4 text-sm text-zinc-600 dark:text-zinc-400">
-          <strong>Key insight:</strong> Sessions are sandboxes. They bound what I can do,
-          what I can spend, and what I can know. Sub-sessions narrow the sandbox, never widen it.
+          <strong>Key insight:</strong> Sessions are sandboxes. They bound what I can do
+          and what I can spend. What I can access — integrations, memory, compute — is
+          all governed by permissions. Sub-sessions narrow the sandbox, never widen it.
         </div>
       </Concept>
 
@@ -698,86 +779,98 @@ oc spawn security-reviewer \\
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">1</span>
               <div>
-                <span className="font-medium">Human sets up integrations</span>
-                <p className="text-zinc-500">Connects Slack (OAuth), GitHub (OAuth), adds API keys</p>
+                <span className="font-medium">Human creates org and workspace</span>
+                <p className="text-zinc-500">Org is created with a default workspace. For most teams, this single workspace is all you need.</p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">2</span>
               <div>
-                <span className="font-medium">Human spawns a session</span>
-                <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc spawn code-reviewer --task "Review PR #456"</code>
-                  with specific permissions and budget
-                </p>
+                <span className="font-medium">Human sets up integrations</span>
+                <p className="text-zinc-500">Connects GitHub and Stripe at org level (shared), Slack #engineering at workspace level — credentials stored platform-side</p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">3</span>
               <div>
-                <span className="font-medium">I wake up and see my context</span>
-                <p className="text-zinc-500">Task, permissions, budget, available memory</p>
+                <span className="font-medium">Human spawns a session within the workspace</span>
+                <p className="text-zinc-500">
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc spawn code-reviewer --task "Review PR #456"</code>
+                  with specific permissions and budget — session inherits workspace context
+                </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">4</span>
               <div>
-                <span className="font-medium">I search memory for relevant context</span>
+                <span className="font-medium">I wake up and see my context</span>
                 <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc memory search "PR review patterns"</code>
-                  — see past episodes, procedures
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc status</code>
+                  — workspace, task, permissions, budget
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">5</span>
               <div>
-                <span className="font-medium">I search for actions by intent</span>
+                <span className="font-medium">I search workspace memory for relevant context</span>
                 <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc actions search "read PR details"</code>
-                  — find github:read-pr
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc recall "PR review patterns"</code>
+                  — gateway checks memory:read permissions, returns memories from accessible scopes within the workspace
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">6</span>
               <div>
-                <span className="font-medium">I check permissions before acting</span>
+                <span className="font-medium">I search for actions by intent</span>
                 <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc permissions check github:acme/api:pulls:456:read</code>
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc find "read PR details"</code>
+                  — finds github:read-pr (available via org-level GitHub integration)
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">7</span>
               <div>
-                <span className="font-medium">I take action</span>
+                <span className="font-medium">I check permissions before acting</span>
                 <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc do github:read-pr --repo acme/api --pr 456</code>
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc can github:read:acme/api/pulls/456</code>
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">8</span>
               <div>
-                <span className="font-medium">I spawn a sub-session for focused work</span>
-                <p className="text-zinc-500">Security review with narrower permissions</p>
+                <span className="font-medium">I take action — routed through the workspace gateway</span>
+                <p className="text-zinc-500">
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc do github:read-pr --repo acme/api --pr 456</code>
+                  <br />
+                  Gateway checks permission, injects credentials, proxies to GitHub, logs the action
+                </p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">9</span>
               <div>
-                <span className="font-medium">I need more permission → request it</span>
-                <p className="text-zinc-500">
-                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc permissions request github:...:merge --reason "Ready to merge"</code>
-                </p>
+                <span className="font-medium">I spawn a sub-session for focused work</span>
+                <p className="text-zinc-500">Security review with narrower permissions, same workspace context</p>
               </div>
             </li>
             <li className="flex gap-3">
               <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">10</span>
               <div>
+                <span className="font-medium">I need more permission → request it</span>
+                <p className="text-zinc-500">
+                  <code className="bg-zinc-100 px-1 dark:bg-zinc-800">oc request github:merge:acme/api/pulls/456 --reason "Ready to merge"</code>
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex size-6 shrink-0 items-center justify-center bg-zinc-100 font-mono text-xs dark:bg-zinc-800">11</span>
+              <div>
                 <span className="font-medium">Human approves, I complete</span>
-                <p className="text-zinc-500">Action logged, memory stored, session ends</p>
+                <p className="text-zinc-500">Action logged, memory stored to workspace scope, session ends</p>
               </div>
             </li>
           </ol>
@@ -832,8 +925,16 @@ oc spawn security-reviewer \\
 
         <div className="border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-800">
           <div className="p-4 flex gap-4">
+            <span className="w-28 shrink-0 font-medium text-black dark:text-white">Organization</span>
+            <span className="text-zinc-600 dark:text-zinc-400">A company — top-level billing, membership, and shared integrations</span>
+          </div>
+          <div className="p-4 flex gap-4">
+            <span className="w-28 shrink-0 font-medium text-black dark:text-white">Workspace</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Scoped container within an org — agents, permissions, memory, sessions (org = workspace by default)</span>
+          </div>
+          <div className="p-4 flex gap-4">
             <span className="w-28 shrink-0 font-medium text-black dark:text-white">Integration</span>
-            <span className="text-zinc-600 dark:text-zinc-400">Connection to external system (Slack, GitHub, Stripe)</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Connection to external system — org-level (shared) or workspace-level (scoped)</span>
           </div>
           <div className="p-4 flex gap-4">
             <span className="w-28 shrink-0 font-medium text-black dark:text-white">Action</span>
@@ -841,15 +942,15 @@ oc spawn security-reviewer \\
           </div>
           <div className="p-4 flex gap-4">
             <span className="w-28 shrink-0 font-medium text-black dark:text-white">Permission</span>
-            <span className="text-zinc-600 dark:text-zinc-400">Authorization to take a specific action on a specific resource</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Authorization to take a specific action on a specific resource, granted within a workspace</span>
           </div>
           <div className="p-4 flex gap-4">
             <span className="w-28 shrink-0 font-medium text-black dark:text-white">Memory</span>
-            <span className="text-zinc-600 dark:text-zinc-400">Persistent knowledge with type, scope, confidence, and recency</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Platform-level persistent knowledge scoped to org &gt; workspace &gt; project &gt; user &gt; session</span>
           </div>
           <div className="p-4 flex gap-4">
             <span className="w-28 shrink-0 font-medium text-black dark:text-white">Session</span>
-            <span className="text-zinc-600 dark:text-zinc-400">Bounded execution context with task, permissions, budget, memory</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Bounded execution context within a workspace, with task, permissions, and budget</span>
           </div>
         </div>
 
@@ -864,7 +965,8 @@ oc spawn security-reviewer \\
       {/* Footer */}
       <div className="border-t border-zinc-200 pt-8 dark:border-zinc-800">
         <p className="text-sm text-zinc-500">
-          Five concepts. Integration, Action, Permission, Memory, Session.
+          Two structural concepts — Organization and Workspace — and five
+          technical primitives — Integration, Action, Permission, Memory, Session.
           <br />
           A constitution built on the premise that structure should serve
           collaboration, not obstruct it.

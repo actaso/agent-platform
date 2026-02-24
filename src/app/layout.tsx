@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Agent Platform",
   description: "A platform for agent-first computing",
+  metadataBase: new URL("https://agentplatform.cloud"),
 };
 
 export default function RootLayout({

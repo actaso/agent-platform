@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Bot, Plug, Zap, Terminal, FileText, Box } from "lucide-react";
+import { Bot, Plug, Zap, Terminal, FileText, Box, Map } from "lucide-react";
 
 const navItems = [
   // Design docs
+  { href: "/platform/architecture", label: "Architecture", icon: Map },
   { href: "/platform/foundations", label: "Foundations", icon: Box },
   { href: "/platform/agent-first", label: "What I Need", icon: FileText },
   { href: "/platform/agent-first-platform", label: "CLI Spec", icon: Terminal },

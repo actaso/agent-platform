@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
-  Shield,
   Zap,
   Clock,
   DollarSign,
@@ -11,7 +9,6 @@ import {
   Terminal,
   Copy,
   Check,
-  ChevronRight,
   AlertTriangle,
   CheckCircle,
   User,
@@ -26,6 +23,9 @@ const mockSession = {
   id: "sess_abc123def456",
   created: "2025-01-22T14:30:00Z",
 
+  org: "acme",
+  workspace: "engineering",
+
   agent: {
     id: "opencompany/code-reviewer",
     version: "2.0.0",
@@ -39,21 +39,22 @@ const mockSession = {
   },
 
   permissions: [
-    { scope: "read:network", resource: "api.github.com/acme/*", delegatable: true },
-    { scope: "write:network", resource: "api.github.com/acme/*", delegatable: true },
-    { scope: "write:network", resource: "slack.com/api/*", delegatable: false },
-    { scope: "access:secrets", resource: "GITHUB_TOKEN", delegatable: false },
-    { scope: "human:approval", resource: "github:merge", delegatable: false },
+    { scope: "github:read", resource: "acme/api/*", mode: "auto", delegatable: true },
+    { scope: "github:comment", resource: "acme/api/*", mode: "auto", delegatable: true },
+    { scope: "github:merge", resource: "acme/api/*", mode: "approve", delegatable: false },
+    { scope: "slack:send", resource: "#engineering", mode: "auto", delegatable: false },
+    { scope: "slack:read", resource: "*", mode: "auto", delegatable: true },
+    { scope: "platform:*", resource: "*", mode: "auto", delegatable: true },
   ],
 
-  capabilities: [
-    "opencompany/github-pr-read",
-    "opencompany/github-pr-comment",
-    "opencompany/github-review",
-    "opencompany/code-review",
-    "opencompany/summarize",
-    "opencompany/slack-send",
-    "opencompany/spawn-agent",
+  actions: [
+    "github:read-pr",
+    "github:comment",
+    "github:review",
+    "platform:summarize",
+    "platform:analyze-code",
+    "slack:send",
+    "spawn",
   ],
 
   budget: {
@@ -158,6 +159,11 @@ export default function SessionPage() {
               {session.agent.id}
               <span className="text-zinc-500">@{session.agent.version}</span>
             </h1>
+            <div className="mt-1 flex items-center gap-2 font-mono text-xs text-zinc-500">
+              <span className="text-indigo-500">{session.org}</span>
+              <span className="text-zinc-400">/</span>
+              <span className="text-cyan-500">{session.workspace}</span>
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             {session.parent.type === "human" ? (
@@ -195,7 +201,7 @@ export default function SessionPage() {
           <div className="space-y-2">
             {session.permissions.map((perm, i) => (
               <div key={i} className="flex items-start gap-2">
-                {perm.scope === "human:approval" ? (
+                {perm.mode === "approve" ? (
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-500" />
                 ) : (
                   <CheckCircle className="mt-0.5 size-4 shrink-0 text-green-500" />
@@ -203,13 +209,16 @@ export default function SessionPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <code className="font-mono text-sm text-black dark:text-white">
-                      {perm.scope}
+                      {perm.scope}:{perm.resource}
                     </code>
+                    <span className="text-xs text-zinc-400">{perm.mode}</span>
                     {perm.delegatable && (
                       <span className="text-xs text-zinc-400">delegatable</span>
                     )}
                   </div>
-                  <p className="truncate font-mono text-xs text-zinc-500">{perm.resource}</p>
+                  <p className="truncate font-mono text-xs text-zinc-500">
+                    enforced at gateway — no credentials in session
+                  </p>
                 </div>
               </div>
             ))}
@@ -276,23 +285,24 @@ export default function SessionPage() {
 
       {/* Grid: Capabilities + Memory */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Capabilities */}
+        {/* Actions */}
         <div className="border border-zinc-200 p-4 dark:border-zinc-800">
           <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Capabilities ({session.capabilities.length})
+            Available Actions ({session.actions.length})
           </h2>
           <div className="flex flex-wrap gap-2">
-            {session.capabilities.map((cap) => (
-              <Link
-                key={cap}
-                href={`/platform/skills/${encodeURIComponent(cap)}`}
-                className="group flex items-center gap-1 border border-zinc-200 px-2 py-1 font-mono text-sm transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+            {session.actions.map((action) => (
+              <span
+                key={action}
+                className="flex items-center gap-1 border border-zinc-200 px-2 py-1 font-mono text-sm dark:border-zinc-800"
               >
-                {cap.split("/")[1]}
-                <ChevronRight className="size-3 text-zinc-400 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+                {action}
+              </span>
             ))}
           </div>
+          <p className="mt-3 text-xs text-zinc-400">
+            All actions route through the platform gateway. No direct external API access.
+          </p>
         </div>
 
         {/* Memory */}
@@ -349,16 +359,16 @@ export default function SessionPage() {
         </h2>
         <div className="flex flex-wrap gap-2">
           <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc query "review this PR"
+            oc find "review this PR"
           </button>
           <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc invoke github-pr-read
+            oc do github:read-pr --repo acme/api --pr 456
           </button>
           <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc spawn --help
+            oc recall "auth patterns"
           </button>
           <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc memory search "auth"
+            oc can github:merge:acme/api/pulls/456
           </button>
         </div>
       </div>
