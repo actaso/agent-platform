@@ -49,7 +49,7 @@ export default function PlatformLayout({
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/platform/session">Session Demo</Link>
+              <Link href="/platform/session">Sessions</Link>
             </Button>
             <Button size="sm" asChild>
               <Link href="/">Get Started</Link>

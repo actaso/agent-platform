@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Required from session manager / Daytona spawn payload.
+: "${OC_API_BASE_URL:?OC_API_BASE_URL is required}"
+: "${OC_SESSION_ID:?OC_SESSION_ID is required}"
+: "${OC_SESSION_TOKEN:?OC_SESSION_TOKEN is required}"
+: "${OC_ORG_ID:?OC_ORG_ID is required}"
+: "${OC_WORKSPACE_ID:?OC_WORKSPACE_ID is required}"
+: "${OC_AGENT_ID:?OC_AGENT_ID is required}"
+
+if [[ -n "${OC_EXTERNAL_TOKEN:-}" ]]; then
+  echo "Refusing bootstrap: external integration tokens are not allowed in session env." >&2
+  exit 1
+fi
+
+echo "Milestone 1 session bootstrap complete."
+echo "Session: ${OC_SESSION_ID}"
+echo "Org/Workspace: ${OC_ORG_ID}/${OC_WORKSPACE_ID}"
+echo "Agent: ${OC_AGENT_ID}"
+
+if [[ "$#" -eq 0 ]]; then
+  exec /bin/bash
+fi
+
+exec "$@"

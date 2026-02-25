@@ -12,7 +12,7 @@ const navItems = [
   { href: "/platform/agent-first", label: "What I Need", icon: FileText },
   { href: "/platform/agent-first-platform", label: "CLI Spec", icon: Terminal },
   // Functional views
-  { href: "/platform/session", label: "Session", icon: Terminal },
+  { href: "/platform/session", label: "Sessions", icon: Terminal },
   { href: "/platform/agents", label: "Agents", icon: Bot },
   { href: "/platform/integrations", label: "Integrations", icon: Plug },
   { href: "/platform/skills", label: "Skills", icon: Zap },

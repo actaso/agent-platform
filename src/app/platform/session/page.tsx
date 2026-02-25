@@ -1,377 +1,263 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Clock3, DollarSign, User, Bot } from "lucide-react";
 import {
-  Zap,
-  Clock,
-  DollarSign,
-  Database,
-  Terminal,
-  Copy,
-  Check,
-  AlertTriangle,
-  CheckCircle,
-  User,
-  Bot,
-} from "lucide-react";
+  getDefaultWebViewer,
+  listSessionsForWeb,
+  listWorkspacesForWeb,
+} from "@/lib/milestone1/store";
 
-// =============================================================================
-// MOCK SESSION DATA - What an agent sees when it "wakes up"
-// =============================================================================
+export const dynamic = "force-dynamic";
 
-const mockSession = {
-  id: "sess_abc123def456",
-  created: "2025-01-22T14:30:00Z",
-
-  org: "acme",
-  workspace: "engineering",
-
-  agent: {
-    id: "opencompany/code-reviewer",
-    version: "2.0.0",
-    instance: "inst_789xyz",
-  },
-
-  parent: {
-    type: "human" as const,
-    id: "user_louis",
-    name: "Louis",
-  },
-
-  permissions: [
-    { scope: "github:read", resource: "acme/api/*", mode: "auto", delegatable: true },
-    { scope: "github:comment", resource: "acme/api/*", mode: "auto", delegatable: true },
-    { scope: "github:merge", resource: "acme/api/*", mode: "approve", delegatable: false },
-    { scope: "slack:send", resource: "#engineering", mode: "auto", delegatable: false },
-    { scope: "slack:read", resource: "*", mode: "auto", delegatable: true },
-    { scope: "platform:*", resource: "*", mode: "auto", delegatable: true },
-  ],
-
-  actions: [
-    "github:read-pr",
-    "github:comment",
-    "github:review",
-    "platform:summarize",
-    "platform:analyze-code",
-    "slack:send",
-    "spawn",
-  ],
-
-  budget: {
-    cost: { used: 12, limit: 500 },       // cents
-    duration: { used: 45, limit: 300 },   // seconds
-    actions: { used: 3, limit: 100 },
-  },
-
-  memory: {
-    facts: 47,
-    episodes: 12,
-    procedures: 3,
-    lastSession: {
-      when: "2025-01-20T10:15:00Z",
-      summary: "Reviewed auth refactor PR, approved with minor comments",
-    },
-  },
-
-  task: {
-    description: "Review PR #456 for security issues and code quality",
-    input: {
-      prUrl: "https://github.com/acme/api/pull/456",
-      focus: ["security", "performance"],
-    },
-  },
-
-  status: "active" as const,
-};
-
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-function useCopyToClipboard() {
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
-  };
-  return { copied, copy };
+interface SessionsPageProps {
+  searchParams: Promise<{
+    error?: string;
+    created?: string;
+    workspace?: string;
+  }>;
 }
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+function formatDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function formatTimeAgo(date: string): string {
-  const diff = Date.now() - new Date(date).getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  if (days > 0) return `${days}d ago`;
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours > 0) return `${hours}h ago`;
-  const mins = Math.floor(diff / (1000 * 60));
-  return `${mins}m ago`;
+function formatCost(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
-function ProgressBar({ used, limit, color }: { used: number; limit: number; color: string }) {
-  const pct = Math.min((used / limit) * 100, 100);
-  return (
-    <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800">
-      <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
-    </div>
-  );
+function getNotice(params: { error?: string; created?: string; workspace?: string }) {
+  if (params.created === "1") {
+    return {
+      type: "success" as const,
+      text: "Session created successfully.",
+    };
+  }
+
+  if (params.workspace === "updated") {
+    return {
+      type: "success" as const,
+      text: "Workspace switched successfully.",
+    };
+  }
+
+  if (params.error) {
+    return {
+      type: "error" as const,
+      text: "Action failed. Check inputs and try again.",
+    };
+  }
+
+  return null;
 }
 
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
-
-export default function SessionPage() {
-  const { copied, copy } = useCopyToClipboard();
-  const session = mockSession;
+export default async function SessionsPage({ searchParams }: SessionsPageProps) {
+  const params = await searchParams;
+  const viewer = getDefaultWebViewer();
+  const workspaces = listWorkspacesForWeb(viewer.org.id);
+  const sessions = listSessionsForWeb(viewer.org.id, viewer.workspace.id);
+  const notice = getNotice(params);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="max-w-5xl space-y-8">
       <div className="border-b border-zinc-200 pb-6 dark:border-zinc-800">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                <span className="size-1.5 animate-pulse rounded-full bg-green-500" />
-                {session.status}
-              </span>
-              <button
-                onClick={() => copy(session.id, "session-id")}
-                className="flex items-center gap-1 font-mono text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              >
-                {session.id}
-                {copied === "session-id" ? (
-                  <Check className="size-3" />
-                ) : (
-                  <Copy className="size-3" />
-                )}
-              </button>
-            </div>
-            <h1 className="font-mono text-2xl text-black dark:text-white">
-              {session.agent.id}
-              <span className="text-zinc-500">@{session.agent.version}</span>
-            </h1>
-            <div className="mt-1 flex items-center gap-2 font-mono text-xs text-zinc-500">
-              <span className="text-indigo-500">{session.org}</span>
-              <span className="text-zinc-400">/</span>
-              <span className="text-cyan-500">{session.workspace}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-zinc-500">
-            {session.parent.type === "human" ? (
-              <User className="size-4" />
-            ) : (
-              <Bot className="size-4" />
-            )}
-            <span>
-              spawned by <span className="text-black dark:text-white">{session.parent.name}</span>
-            </span>
-          </div>
-        </div>
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-zinc-500">
+          Milestone 1
+        </p>
+        <h1 className="text-3xl text-black dark:text-white">Sessions</h1>
+        <p className="mt-3 text-zinc-600 dark:text-zinc-400">
+          Session list and detail view backed by `/v1/sessions`, plus direct web controls for workspace switching and session spawn.
+        </p>
       </div>
 
-      {/* Task */}
-      <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="mb-2 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-          Task
-        </h2>
-        <p className="mb-3 text-black dark:text-white">{session.task.description}</p>
-        <div className="bg-zinc-900 p-3 dark:bg-zinc-950">
-          <pre className="font-mono text-sm text-zinc-100">
-            {JSON.stringify(session.task.input, null, 2)}
-          </pre>
+      {notice && (
+        <div
+          className={
+            notice.type === "success"
+              ? "border border-green-300 bg-green-50 p-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/30 dark:text-green-300"
+              : "border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+          }
+        >
+          {notice.text}
         </div>
-      </div>
+      )}
 
-      {/* Grid: Permissions + Budget */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Permissions */}
         <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Permissions ({session.permissions.length})
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-zinc-500">
+            Active Context
           </h2>
-          <div className="space-y-2">
-            {session.permissions.map((perm, i) => (
-              <div key={i} className="flex items-start gap-2">
-                {perm.mode === "approve" ? (
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-500" />
-                ) : (
-                  <CheckCircle className="mt-0.5 size-4 shrink-0 text-green-500" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <code className="font-mono text-sm text-black dark:text-white">
-                      {perm.scope}:{perm.resource}
-                    </code>
-                    <span className="text-xs text-zinc-400">{perm.mode}</span>
-                    {perm.delegatable && (
-                      <span className="text-xs text-zinc-400">delegatable</span>
-                    )}
-                  </div>
-                  <p className="truncate font-mono text-xs text-zinc-500">
-                    enforced at gateway — no credentials in session
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Budget */}
-        <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Budget
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                  <DollarSign className="size-4" />
-                  Cost
-                </span>
-                <span className="font-mono text-black dark:text-white">
-                  ${(session.budget.cost.used / 100).toFixed(2)} / ${(session.budget.cost.limit / 100).toFixed(2)}
-                </span>
-              </div>
-              <ProgressBar
-                used={session.budget.cost.used}
-                limit={session.budget.cost.limit}
-                color="bg-blue-500"
-              />
-            </div>
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                  <Clock className="size-4" />
-                  Duration
-                </span>
-                <span className="font-mono text-black dark:text-white">
-                  {formatDuration(session.budget.duration.used)} / {formatDuration(session.budget.duration.limit)}
-                </span>
-              </div>
-              <ProgressBar
-                used={session.budget.duration.used}
-                limit={session.budget.duration.limit}
-                color="bg-green-500"
-              />
-            </div>
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                  <Zap className="size-4" />
-                  Actions
-                </span>
-                <span className="font-mono text-black dark:text-white">
-                  {session.budget.actions.used} / {session.budget.actions.limit}
-                </span>
-              </div>
-              <ProgressBar
-                used={session.budget.actions.used}
-                limit={session.budget.actions.limit}
-                color="bg-purple-500"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid: Capabilities + Memory */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Actions */}
-        <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Available Actions ({session.actions.length})
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {session.actions.map((action) => (
-              <span
-                key={action}
-                className="flex items-center gap-1 border border-zinc-200 px-2 py-1 font-mono text-sm dark:border-zinc-800"
-              >
-                {action}
-              </span>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-zinc-400">
-            All actions route through the platform gateway. No direct external API access.
+          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+            Org: {viewer.org.name} ({viewer.org.id})
           </p>
+          <form action="/platform/session/workspace" method="post" className="space-y-3">
+            <label className="block text-xs text-zinc-500">Workspace</label>
+            <select
+              name="workspaceId"
+              defaultValue={viewer.workspace.id}
+              className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              {workspaces.map((workspace) => (
+                <option key={workspace.id} value={workspace.id}>
+                  {workspace.name} ({workspace.id})
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="w-full border border-zinc-300 px-3 py-2 text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            >
+              Switch Workspace
+            </button>
+          </form>
         </div>
 
-        {/* Memory */}
         <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Memory
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-zinc-500">
+            Spawn Session
           </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <Database className="size-4" />
-                Facts
-              </span>
-              <span className="font-mono text-sm text-black dark:text-white">
-                {session.memory.facts}
-              </span>
+          <form action="/platform/session/spawn" method="post" className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs text-zinc-500">Agent</label>
+              <input
+                name="agent"
+                required
+                placeholder="opencompany/code-reviewer"
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              />
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <Terminal className="size-4" />
-                Episodes
-              </span>
-              <span className="font-mono text-sm text-black dark:text-white">
-                {session.memory.episodes}
-              </span>
+            <div>
+              <label className="mb-1 block text-xs text-zinc-500">Task (optional)</label>
+              <input
+                name="task"
+                placeholder="Review PR #123"
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              />
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <Zap className="size-4" />
-                Procedures
-              </span>
-              <span className="font-mono text-sm text-black dark:text-white">
-                {session.memory.procedures}
-              </span>
+            <div>
+              <label className="mb-1 block text-xs text-zinc-500">Workspace</label>
+              <select
+                name="workspaceId"
+                defaultValue={viewer.workspace.id}
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                {workspaces.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            {session.memory.lastSession && (
-              <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-900">
-                <p className="text-xs text-zinc-500">
-                  Last session: {formatTimeAgo(session.memory.lastSession.when)}
-                </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {session.memory.lastSession.summary}
-                </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="mb-1 block text-xs text-zinc-500">Cost (cents)</label>
+                <input
+                  type="number"
+                  min={1}
+                  name="costLimitCents"
+                  defaultValue={500}
+                  className="w-full border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                />
               </div>
-            )}
-          </div>
+              <div>
+                <label className="mb-1 block text-xs text-zinc-500">Duration (s)</label>
+                <input
+                  type="number"
+                  min={1}
+                  name="durationLimitSeconds"
+                  defaultValue={300}
+                  className="w-full border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-zinc-500">Actions</label>
+                <input
+                  type="number"
+                  min={1}
+                  name="actionLimit"
+                  defaultValue={100}
+                  className="w-full border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-black px-3 py-2 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-300"
+            >
+              Spawn
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-          Quick Actions
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc find "review this PR"
-          </button>
-          <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc do github:read-pr --repo acme/api --pr 456
-          </button>
-          <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc recall "auth patterns"
-          </button>
-          <button className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
-            oc can github:merge:acme/api/pulls/456
-          </button>
+      {sessions.length === 0 ? (
+        <div className="border border-dashed border-zinc-300 p-8 text-zinc-500 dark:border-zinc-700">
+          No sessions in this workspace yet. Run{" "}
+          <code className="bg-zinc-100 px-1 dark:bg-zinc-800">
+            oc spawn &lt;agent&gt;
+          </code>{" "}
+          or use the Spawn Session form.
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {sessions.map((session) => (
+            <Link
+              key={session.id}
+              href={`/platform/session/${session.id}`}
+              className="group block border border-zinc-200 p-4 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+            >
+              <div className="mb-3 flex items-start justify-between gap-4">
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded bg-green-100 px-2 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      {session.status}
+                    </span>
+                    <code className="font-mono text-xs text-zinc-500">{session.id}</code>
+                  </div>
+                  <h2 className="font-mono text-base text-black dark:text-white">
+                    {session.agent.id}
+                    <span className="text-zinc-500">@{session.agent.version}</span>
+                  </h2>
+                </div>
+                <ArrowRight className="size-4 text-zinc-400 transition-transform group-hover:translate-x-1" />
+              </div>
+
+              <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                {session.task.description}
+              </p>
+
+              <div className="grid gap-3 text-xs text-zinc-500 sm:grid-cols-4">
+                <div className="flex items-center gap-2">
+                  {session.parent.type === "human" ? (
+                    <User className="size-3.5" />
+                  ) : (
+                    <Bot className="size-3.5" />
+                  )}
+                  <span>{session.parent.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="size-3.5" />
+                  <span>
+                    {formatCost(session.budget.costCents.used)} /{" "}
+                    {formatCost(session.budget.costCents.limit)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock3 className="size-3.5" />
+                  <span>
+                    {session.budget.durationSeconds.used}s /{" "}
+                    {session.budget.durationSeconds.limit}s
+                  </span>
+                </div>
+                <div>created {formatDate(session.createdAt)}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

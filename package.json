@@ -2,11 +2,15 @@
   "name": "agent-platform",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "oc": "./bin/oc.mjs"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "tsc --noEmit",
+    "oc": "node ./bin/oc.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
