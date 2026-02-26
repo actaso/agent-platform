@@ -25,7 +25,7 @@ export default async function IntegrationDetailPage({
   return (
     <div>
       <Link
-        href="/platform/integrations"
+        href="/docs/integrations"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
       >
         <ArrowLeft className="size-4" />

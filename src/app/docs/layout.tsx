@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PlatformSidebar } from "./_components/platform-sidebar";
+import { DocsSidebar } from "./_components/platform-sidebar";
 
-export default function PlatformLayout({
+export default function DocsLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ export default function PlatformLayout({
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link
-              href="/platform"
+              href="/docs"
               className="flex items-center gap-2 font-medium text-black dark:text-white"
             >
               <div className="size-6 bg-black dark:bg-white" />
@@ -22,25 +22,31 @@ export default function PlatformLayout({
             </Link>
             <nav className="hidden items-center gap-6 md:flex">
               <Link
-                href="/platform/agents"
+                href="/docs"
+                className="text-sm font-medium text-black dark:text-white"
+              >
+                Docs
+              </Link>
+              <Link
+                href="/docs/agents"
                 className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
               >
                 Agents
               </Link>
               <Link
-                href="/platform/skills"
+                href="/docs/skills"
                 className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
               >
                 Skills
               </Link>
               <Link
-                href="/platform/integrations"
+                href="/docs/integrations"
                 className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
               >
                 Integrations
               </Link>
               <Link
-                href="/platform/foundations"
+                href="/docs/foundations"
                 className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
               >
                 Foundations
@@ -49,7 +55,7 @@ export default function PlatformLayout({
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/platform/session">Session Demo</Link>
+              <Link href="/docs/session">Session Demo</Link>
             </Button>
             <Button size="sm" asChild>
               <Link href="/">Get Started</Link>
@@ -60,7 +66,7 @@ export default function PlatformLayout({
 
       {/* Main content */}
       <div className="mx-auto flex max-w-screen-xl gap-0 px-4 sm:px-6 lg:px-8">
-        <PlatformSidebar />
+        <DocsSidebar />
         <main className="flex-1 py-8 md:pl-8">{children}</main>
       </div>
 
@@ -75,7 +81,7 @@ export default function PlatformLayout({
               </span>
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              An agent-first computing platform
+              An open platform for agent-first computing
             </p>
           </div>
         </div>

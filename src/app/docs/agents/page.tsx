@@ -1,34 +1,34 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { skills } from "../_data/mock-data";
+import { agents } from "../_data/mock-data";
 import { PlatformHeader, type SortOption } from "../_components/platform-header";
 import { PlatformItemRow } from "../_components/platform-item-row";
 
-const categories = [...new Set(skills.map((s) => s.category))].sort();
+const categories = [...new Set(agents.map((a) => a.category))].sort();
 
-export default function SkillsPage() {
+export default function AgentsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState<SortOption>("popular");
 
-  const filteredSkills = useMemo(() => {
-    let result = skills;
+  const filteredAgents = useMemo(() => {
+    let result = agents;
 
     // Filter by search
     if (search.trim()) {
       const query = search.toLowerCase();
       result = result.filter(
-        (skill) =>
-          skill.name.toLowerCase().includes(query) ||
-          skill.description.toLowerCase().includes(query) ||
-          skill.tags.some((tag) => tag.toLowerCase().includes(query))
+        (agent) =>
+          agent.name.toLowerCase().includes(query) ||
+          agent.description.toLowerCase().includes(query) ||
+          agent.tags.some((tag) => tag.toLowerCase().includes(query))
       );
     }
 
     // Filter by category
     if (selectedCategory !== "all") {
-      result = result.filter((skill) => skill.category === selectedCategory);
+      result = result.filter((agent) => agent.category === selectedCategory);
     }
 
     // Sort
@@ -50,8 +50,8 @@ export default function SkillsPage() {
   return (
     <div>
       <PlatformHeader
-        title="Skills"
-        count={filteredSkills.length}
+        title="Agents"
+        count={filteredAgents.length}
         searchValue={search}
         onSearchChange={setSearch}
         categories={categories}
@@ -61,22 +61,22 @@ export default function SkillsPage() {
         onSortChange={setSortBy}
       />
       <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-        {filteredSkills.map((skill) => (
+        {filteredAgents.map((agent) => (
           <PlatformItemRow
-            key={skill.id}
-            href={`/platform/skills/${encodeURIComponent(skill.id)}`}
-            name={skill.name}
-            id={skill.id}
-            version={skill.version}
-            description={skill.description}
-            installations={skill.metrics.activeInstallations}
-            tags={skill.tags}
+            key={agent.id}
+            href={`/docs/agents/${encodeURIComponent(agent.id)}`}
+            name={agent.name}
+            id={agent.id}
+            version={agent.version}
+            description={agent.description}
+            installations={agent.metrics.activeInstallations}
+            tags={agent.tags}
           />
         ))}
       </div>
-      {filteredSkills.length === 0 && (
+      {filteredAgents.length === 0 && (
         <p className="py-12 text-center text-zinc-500 dark:text-zinc-400">
-          No skills found matching your search.
+          No agents found matching your search.
         </p>
       )}
     </div>

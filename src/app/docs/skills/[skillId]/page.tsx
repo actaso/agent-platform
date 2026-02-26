@@ -23,7 +23,7 @@ export default async function SkillDetailPage({ params }: SkillDetailPageProps) 
   return (
     <div>
       <Link
-        href="/platform/skills"
+        href="/docs/skills"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
       >
         <ArrowLeft className="size-4" />

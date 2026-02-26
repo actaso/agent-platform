@@ -1,34 +1,34 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { agents } from "../_data/mock-data";
+import { integrations } from "../_data/mock-data";
 import { PlatformHeader, type SortOption } from "../_components/platform-header";
 import { PlatformItemRow } from "../_components/platform-item-row";
 
-const categories = [...new Set(agents.map((a) => a.category))].sort();
+const categories = [...new Set(integrations.map((i) => i.category))].sort();
 
-export default function AgentsPage() {
+export default function IntegrationsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState<SortOption>("popular");
 
-  const filteredAgents = useMemo(() => {
-    let result = agents;
+  const filteredIntegrations = useMemo(() => {
+    let result = integrations;
 
     // Filter by search
     if (search.trim()) {
       const query = search.toLowerCase();
       result = result.filter(
-        (agent) =>
-          agent.name.toLowerCase().includes(query) ||
-          agent.description.toLowerCase().includes(query) ||
-          agent.tags.some((tag) => tag.toLowerCase().includes(query))
+        (integration) =>
+          integration.name.toLowerCase().includes(query) ||
+          integration.description.toLowerCase().includes(query) ||
+          integration.tags.some((tag) => tag.toLowerCase().includes(query))
       );
     }
 
     // Filter by category
     if (selectedCategory !== "all") {
-      result = result.filter((agent) => agent.category === selectedCategory);
+      result = result.filter((integration) => integration.category === selectedCategory);
     }
 
     // Sort
@@ -50,8 +50,8 @@ export default function AgentsPage() {
   return (
     <div>
       <PlatformHeader
-        title="Agents"
-        count={filteredAgents.length}
+        title="Integrations"
+        count={filteredIntegrations.length}
         searchValue={search}
         onSearchChange={setSearch}
         categories={categories}
@@ -61,22 +61,22 @@ export default function AgentsPage() {
         onSortChange={setSortBy}
       />
       <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-        {filteredAgents.map((agent) => (
+        {filteredIntegrations.map((integration) => (
           <PlatformItemRow
-            key={agent.id}
-            href={`/platform/agents/${encodeURIComponent(agent.id)}`}
-            name={agent.name}
-            id={agent.id}
-            version={agent.version}
-            description={agent.description}
-            installations={agent.metrics.activeInstallations}
-            tags={agent.tags}
+            key={integration.id}
+            href={`/docs/integrations/${encodeURIComponent(integration.id)}`}
+            name={integration.name}
+            id={integration.id}
+            version={integration.version}
+            description={integration.description}
+            installations={integration.metrics.activeInstallations}
+            tags={integration.tags}
           />
         ))}
       </div>
-      {filteredAgents.length === 0 && (
+      {filteredIntegrations.length === 0 && (
         <p className="py-12 text-center text-zinc-500 dark:text-zinc-400">
-          No agents found matching your search.
+          No integrations found matching your search.
         </p>
       )}
     </div>

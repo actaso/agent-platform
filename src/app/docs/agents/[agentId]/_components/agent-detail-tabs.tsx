@@ -386,7 +386,7 @@ export function AgentDetailTabs({
                       {agent.integrations.map((integrationId) => (
                         <Link
                           key={integrationId}
-                          href={`/platform/integrations/${encodeURIComponent(integrationId)}`}
+                          href={`/docs/integrations/${encodeURIComponent(integrationId)}`}
                           className="border border-zinc-200 px-3 py-1.5 font-mono text-sm transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
                         >
                           {integrationId}

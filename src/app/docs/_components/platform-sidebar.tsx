@@ -7,18 +7,18 @@ import { Bot, Plug, Zap, Terminal, FileText, Box, Map } from "lucide-react";
 
 const navItems = [
   // Design docs
-  { href: "/platform/architecture", label: "Architecture", icon: Map },
-  { href: "/platform/foundations", label: "Foundations", icon: Box },
-  { href: "/platform/agent-first", label: "What I Need", icon: FileText },
-  { href: "/platform/agent-first-platform", label: "CLI Spec", icon: Terminal },
+  { href: "/docs/architecture", label: "Architecture", icon: Map },
+  { href: "/docs/foundations", label: "Foundations", icon: Box },
+  { href: "/docs/agent-first", label: "What I Need", icon: FileText },
+  { href: "/docs/agent-first-platform", label: "CLI Spec", icon: Terminal },
   // Functional views
-  { href: "/platform/session", label: "Session", icon: Terminal },
-  { href: "/platform/agents", label: "Agents", icon: Bot },
-  { href: "/platform/integrations", label: "Integrations", icon: Plug },
-  { href: "/platform/skills", label: "Skills", icon: Zap },
+  { href: "/docs/session", label: "Session", icon: Terminal },
+  { href: "/docs/agents", label: "Agents", icon: Bot },
+  { href: "/docs/integrations", label: "Integrations", icon: Plug },
+  { href: "/docs/skills", label: "Skills", icon: Zap },
 ];
 
-export function PlatformSidebar() {
+export function DocsSidebar() {
   const pathname = usePathname();
 
   return (

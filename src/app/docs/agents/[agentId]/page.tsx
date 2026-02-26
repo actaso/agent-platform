@@ -24,7 +24,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
   return (
     <div>
       <Link
-        href="/platform/agents"
+        href="/docs/agents"
         className="mb-6 inline-flex items-center gap-1.5 font-mono text-sm text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
       >
         <ArrowLeft className="size-4" />

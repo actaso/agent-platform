@@ -343,7 +343,7 @@ export function IntegrationDetailTabs({
                 {relatedAgents.map((agent) => (
                   <Link
                     key={agent.id}
-                    href={`/platform/agents/${encodeURIComponent(agent.id)}`}
+                    href={`/docs/agents/${encodeURIComponent(agent.id)}`}
                     className="group border border-zinc-200 p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
                   >
                     <div className="mb-2 flex items-center justify-between">
